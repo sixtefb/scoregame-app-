@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0b0f14;
+  --surface: #131a24;
+  --surface-elevated: #1a2331;
+  --border: #26313f;
+  --foreground: #f2f5f8;
+  --muted: #8b97a8;
+  --accent-gold: #f5b942;
+  --accent-red: #e2574c;
+  --accent-green: #35c48d;
+  --accent-blue: #4f8ff5;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent-gold: var(--accent-gold);
+  --color-accent-red: var(--accent-red);
+  --color-accent-green: var(--accent-green);
+  --color-accent-blue: var(--accent-blue);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.triangle-header {
+  background-image: repeating-linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--accent-gold) 14%, transparent) 0px,
+    color-mix(in srgb, var(--accent-gold) 14%, transparent) 18px,
+    transparent 18px,
+    transparent 46px
+  );
+}
+
+.tap-target {
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent-gold) 40%, transparent);
+}
