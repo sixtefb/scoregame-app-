@@ -73,14 +73,19 @@ export default function JoueurDetailPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-3 gap-3">
+      <div className="mt-6 grid grid-cols-2 gap-3">
         <StatTile label="Niveau" value={Math.round(myRating).toString()} color="var(--accent-gold)" />
         <StatTile
           label="Chance"
           value={`${(myLuck?.luckIndex ?? 0) >= 0 ? "+" : ""}${Math.round(myLuck?.luckIndex ?? 0)}%`}
           color={(myLuck?.luckIndex ?? 0) >= 0 ? "var(--accent-green)" : "var(--accent-red)"}
         />
-        <StatTile label="Trophées" value={trophies.length.toString()} color="var(--accent-blue)" />
+        <StatTile
+          label="Doubles / partie"
+          value={(myStats?.doublesPerGame ?? 0).toFixed(1)}
+          color="var(--accent-blue)"
+        />
+        <StatTile label="Trophées" value={trophies.length.toString()} color="var(--accent-gold)" />
       </div>
 
       <section className="mt-8">

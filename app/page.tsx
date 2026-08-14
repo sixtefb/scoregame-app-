@@ -5,30 +5,38 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePlayers } from "@/components/PlayerContext";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
-import { fetchAllGames } from "@/lib/queries";
+import { fetchAllGames, fetchInProgressMatches } from "@/lib/queries";
 import { computeEloRatings } from "@/lib/stats";
+import type { Game, Match } from "@/lib/types";
 
 export default function Home() {
   const { players, currentPlayer, loading } = usePlayers();
   const router = useRouter();
   const [ranking, setRanking] = useState<{ id: string; rating: number }[]>([]);
+  const [inProgress, setInProgress] = useState<Match[]>([]);
+  const [games, setGames] = useState<Game[]>([]);
 
   useEffect(() => {
     if (!loading && !currentPlayer) router.replace("/profil");
   }, [loading, currentPlayer, router]);
 
   useEffect(() => {
-    fetchAllGames()
-      .then((games) => {
-        const ratings = computeEloRatings(games);
-        const rows = [...ratings.entries()]
-          .map(([id, rating]) => ({ id, rating }))
-          .sort((a, b) => b.rating - a.rating)
-          .slice(0, 3);
-        setRanking(rows);
-      })
-      .catch(() => {});
+    fetchAllGames().then((allGames) => {
+      setGames(allGames);
+      const ratings = computeEloRatings(allGames);
+      const rows = [...ratings.entries()]
+        .map(([id, rating]) => ({ id, rating }))
+        .sort((a, b) => b.rating - a.rating)
+        .slice(0, 3);
+      setRanking(rows);
+    });
+    fetchInProgressMatches().then(setInProgress);
   }, []);
+
+  const scoreFor = (matchId: string, playerId: string) =>
+    games
+      .filter((g) => g.match_id === matchId && g.status === "completed" && g.winner_id === playerId)
+      .reduce((sum, g) => sum + g.points_awarded, 0);
 
   if (loading || !currentPlayer) return null;
 
@@ -60,6 +68,34 @@ export default function Home() {
           <span className="mt-6 font-semibold">Créer une compète</span>
         </Link>
       </div>
+
+      {inProgress.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-3 font-semibold">Parties en cours</h2>
+          <ul className="flex flex-col gap-2">
+            {inProgress.map((m) => {
+              const pA = players.find((p) => p.id === m.player_a_id);
+              const pB = players.find((p) => p.id === m.player_b_id);
+              if (!pA || !pB) return null;
+              return (
+                <li key={m.id}>
+                  <Link
+                    href={`/parties/${m.id}`}
+                    className="tap-target flex items-center gap-3 rounded-2xl border border-accent-gold/40 bg-surface px-4 py-3"
+                  >
+                    <PlayerAvatar name={pA.name} color={pA.color} size={30} />
+                    <span className="font-mono text-sm text-muted">{scoreFor(m.id, pA.id)}</span>
+                    <span className="text-xs text-muted">vs</span>
+                    <span className="font-mono text-sm text-muted">{scoreFor(m.id, pB.id)}</span>
+                    <PlayerAvatar name={pB.name} color={pB.color} size={30} />
+                    <span className="ml-auto text-xs text-accent-gold">Reprendre →</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-8">
         <div className="mb-3 flex items-center justify-between">

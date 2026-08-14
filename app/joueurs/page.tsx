@@ -4,28 +4,38 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePlayers } from "@/components/PlayerContext";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { PlayerCompare } from "@/components/PlayerCompare";
 import { fetchAllDiceEvents, fetchAllGames } from "@/lib/queries";
-import { computeDiceStats, computeEloRatings, computeLuckIndex } from "@/lib/stats";
+import { computeDiceStats, computeEloRatings, computeLuckIndex, type DiceStats, type LuckEntry } from "@/lib/stats";
+import type { Game } from "@/lib/types";
 
 export default function JoueursPage() {
   const { players } = usePlayers();
   const [rows, setRows] = useState<
     { id: string; rating: number; gamesPlayed: number; luckIndex: number }[] | null
   >(null);
+  const [games, setGames] = useState<Game[]>([]);
+  const [ratings, setRatings] = useState<Map<string, number>>(new Map());
+  const [diceStats, setDiceStats] = useState<Map<string, DiceStats>>(new Map());
+  const [luckIndexMap, setLuckIndexMap] = useState<Map<string, LuckEntry>>(new Map());
 
   useEffect(() => {
-    Promise.all([fetchAllGames(), fetchAllDiceEvents()]).then(([games, events]) => {
-      const ratings = computeEloRatings(games);
-      const dice = computeDiceStats(games, events);
+    Promise.all([fetchAllGames(), fetchAllDiceEvents()]).then(([allGames, events]) => {
+      const eloRatings = computeEloRatings(allGames);
+      const dice = computeDiceStats(allGames, events);
       const luck = computeLuckIndex(dice);
       const result = players.map((p) => ({
         id: p.id,
-        rating: ratings.get(p.id) ?? 1500,
+        rating: eloRatings.get(p.id) ?? 1500,
         gamesPlayed: dice.get(p.id)?.gamesPlayed ?? 0,
         luckIndex: luck.get(p.id)?.luckIndex ?? 0,
       }));
       result.sort((a, b) => b.rating - a.rating);
       setRows(result);
+      setGames(allGames);
+      setRatings(eloRatings);
+      setDiceStats(dice);
+      setLuckIndexMap(luck);
     });
   }, [players]);
 
@@ -70,6 +80,17 @@ export default function JoueursPage() {
           })}
         </ul>
       )}
+
+      <div className="mt-8 mb-8">
+        <h2 className="mb-3 font-semibold">Comparer deux joueurs</h2>
+        <PlayerCompare
+          players={players}
+          games={games}
+          ratings={ratings}
+          diceStats={diceStats}
+          luckIndexMap={luckIndexMap}
+        />
+      </div>
     </main>
   );
 }

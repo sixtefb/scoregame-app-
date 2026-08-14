@@ -38,6 +38,20 @@ export async function fetchCompetitions(): Promise<Competition[]> {
   }
 }
 
+export async function fetchInProgressMatches(): Promise<Match[]> {
+  try {
+    const { data, error } = await supabase
+      .from("matches")
+      .select("*")
+      .eq("status", "in_progress")
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return (data ?? []) as Match[];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchMatchesForCompetition(competitionId: string): Promise<Match[]> {
   try {
     const { data, error } = await supabase

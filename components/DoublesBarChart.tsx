@@ -24,7 +24,7 @@ export function DoublesBarChart({ doublesByValue }: { doublesByValue: Record<num
             }}
             cursor={{ fill: "var(--surface-elevated)" }}
           />
-          <Bar dataKey="count" fill="var(--accent-gold)" radius={[8, 8, 0, 0]} />
+          <Bar dataKey="count" fill="var(--accent-gold)" radius={[8, 8, 0, 0]} isAnimationActive={false} />
         </BarChart>
       </ResponsiveContainer>
     </div>
