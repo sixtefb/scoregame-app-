@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { usePlayers } from "@/components/PlayerContext";
@@ -15,6 +15,7 @@ const CUBE_MAX = 64;
 export default function LiveMatchPage() {
   const { matchId } = useParams<{ matchId: string }>();
   const { players } = usePlayers();
+  const router = useRouter();
 
   const [match, setMatch] = useState<Match | null>(null);
   const [games, setGames] = useState<Game[]>([]);
@@ -158,6 +159,13 @@ export default function LiveMatchPage() {
     loadMatch();
   };
 
+  const abandonMatch = async () => {
+    if (!match) return;
+    if (!confirm("Abandonner cette partie ? Elle sera supprimée définitivement.")) return;
+    await supabase.from("matches").delete().eq("id", match.id);
+    router.push("/");
+  };
+
   if (!match || !playerA || !playerB) {
     return (
       <main className="flex flex-1 items-center justify-center px-5">
@@ -262,6 +270,13 @@ export default function LiveMatchPage() {
           </ul>
         )}
       </div>
+
+      <button
+        onClick={abandonMatch}
+        className="tap-target mb-4 mt-2 text-center text-sm text-muted active:text-accent-red"
+      >
+        Abandonner cette partie
+      </button>
 
       {doubleFor && (
         <DoubleModal

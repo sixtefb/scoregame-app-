@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePlayers } from "@/components/PlayerContext";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { supabase } from "@/lib/supabase";
 import { fetchAllGames, fetchInProgressMatches } from "@/lib/queries";
 import { computeEloRatings } from "@/lib/stats";
 import type { Game, Match } from "@/lib/types";
@@ -37,6 +38,12 @@ export default function Home() {
     games
       .filter((g) => g.match_id === matchId && g.status === "completed" && g.winner_id === playerId)
       .reduce((sum, g) => sum + g.points_awarded, 0);
+
+  const deleteMatch = async (matchId: string) => {
+    if (!confirm("Supprimer cette partie en cours ? Cette action est irréversible.")) return;
+    await supabase.from("matches").delete().eq("id", matchId);
+    setInProgress((prev) => prev.filter((m) => m.id !== matchId));
+  };
 
   if (loading || !currentPlayer) return null;
 
@@ -78,10 +85,10 @@ export default function Home() {
               const pB = players.find((p) => p.id === m.player_b_id);
               if (!pA || !pB) return null;
               return (
-                <li key={m.id}>
+                <li key={m.id} className="flex items-center gap-2">
                   <Link
                     href={`/parties/${m.id}`}
-                    className="tap-target flex items-center gap-3 rounded-2xl border border-accent-gold/40 bg-surface px-4 py-3"
+                    className="tap-target flex flex-1 items-center gap-3 rounded-2xl border border-accent-gold/40 bg-surface px-4 py-3"
                   >
                     <PlayerAvatar name={pA.name} color={pA.color} size={30} />
                     <span className="font-mono text-sm text-muted">{scoreFor(m.id, pA.id)}</span>
@@ -90,6 +97,13 @@ export default function Home() {
                     <PlayerAvatar name={pB.name} color={pB.color} size={30} />
                     <span className="ml-auto text-xs text-accent-gold">Reprendre →</span>
                   </Link>
+                  <button
+                    onClick={() => deleteMatch(m.id)}
+                    aria-label="Supprimer cette partie"
+                    className="tap-target flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border text-muted active:border-accent-red active:text-accent-red"
+                  >
+                    ✕
+                  </button>
                 </li>
               );
             })}
